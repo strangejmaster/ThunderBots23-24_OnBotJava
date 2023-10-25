@@ -4,20 +4,31 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import java.lang.Math;
 
 
 @TeleOp
 public class DrivetrainControl extends OpMode{
-    DcMotor mtFR = null;
-    DcMotor mtFL = null;
-    double deadzone = 0.05;
+    DcMotor mtFL = null; // Front Left
+    DcMotor mtFR = null; // Front Right
+    DcMotor mtBL = null; // Back Left
+    DcMotor mtBR = null; // Back Right
 
-    // Positions of joysticks
-    float leftX = 0;
-    float leftY = 0;
+    DcMotor[] motors = {mtFL, mtFR, mtBL, mtBR};
 
-    float rightX = 0;
-    float rightY = 0;
+    // To make the joysticks easier to understand there are 4 boxes placed on each joystick (Imaginary)
+    // If the joystick is in the center the box is 0, right or up is 1, and left or down is -1
+    // l and r corresponds to left and right joysticks
+    // The X and Y are the axis that the boxes are on
+    int lXBox = 0;
+    int lYBox = 0;
+    int rXBox = 0;
+    int rYBox = 0;
+
+    // Array which indicates if a wheel will be powered on this tick (Power Matrix)
+    // In this order FL, FR, BL, BR
+    float[] powMat = {0, 0, 
+                      0, 0};
 
     public void init() {
     // Setup motors
@@ -31,69 +42,164 @@ public class DrivetrainControl extends OpMode{
         mtBR = hardwareMap.get(DcMotor.class, CONFIG.DRIVETRAIN.BACK_RIGHT);
         mtBL = hardwareMap.get(DcMotor.class, CONFIG.DRIVETRAIN.BACK_LEFT);
 
-        // What to do if there's no power being provided
-        // mtFR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        // mtFL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        // mtFR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        // mtFL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        // Apply configuration settings to the motors quickly
+        for (int i = 0; i < motors.length; i++) {
+            motors[i].setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            motors[i].setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        }
 
-        // mtFR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        // mtFL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        // mtFR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        // mtFL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-    
-        // mtFR.setDirection(DcMotorSimple.Direction.FORWARD);
-        // mtFL.setDirection(DcMotorSimple.Direction.FORWARD);
+        mtFL.setDirection(DcMotorSimple.Direction.FORWARD);
+        mtFR.setDirection(DcMotorSimple.Direction.FORWARD);
+        mtBL.setDirection(DcMotorSimple.Direction.FORWARD);
+        mtBR.setDirection(DcMotorSimple.Direction.FORWARD);
 
-    // Gamepad setup
-        gamepad1 = new GamePad();
-        gamepad1.setJoyStickDeadzone(CONFIG.CONTROLLER.DEADZONE);
+    // Setup Gamepad
+        Gamepad pad = new GamePad();
+        pad.setJoyStickDeadzone(CONFIG.CONTROLLER.DEADZONE);
     }
     
 
     public void loop() {
-        // If the gamepad has input from a joystick then run
+        // Once a joystick has left the deadzone check whats going on
         if( !gamepad1.atRest() ) {
-            leftX = gamepad1.left_stick_x;
-            leftY = gamepad1.left_stick_y;
-            rightX = gamepad1.right_stick_x;
-            rightY = gamepad1.right_stick_y;
+            powMat = {0, 0, 
+                      0, 0};
+            
+            lXBox = calcBox(pad.left_stick_x, CONFIG.CONTROLLER.DEADZONE);
+            lYBox = calcBox(pad.left_stick_y, CONFIG.CONTROLLER.DEADZONE);
+            rXBox = calcBox(pad.right_stick_x, CONFIG.CONTROLLER.DEADZONE);
+            lXBox = calcBox(pad.right_stick_y, CONFIG.CONTROLLER.DEADZONE);
+            
+            if (CONFIG.CONTROLLER.ADVANCED_CONTROL == false) {
+                // Only the left joystick is active
+                if (lXBox != 0 && rYBox == 0) {
+                    switch(lXBox)
+                        case 0:
+                            break;
+                        case 1:
+                            powMat = {1, 1, 
+                                    1, 1};
+                            break;
+                        case -1:
+                            powMat = {-1, -1, 
+                                    -1, -1};
+                        default:
+                            break;
+                    }
+                } 
+                // Only the right joystick is active
+                else if (rYBox != 0 && lXBox == 0) {
+                    switch(rYBox) {
+                        case 0:
+                            break;
+                        case 1:
+                            powerMat = {1, -1, 
+                                        -1, 1};
+                        case -1:
+                            powMat = {-1, 1, 
+                                    1, -1};
+                        default:
+                            break;
+                    }
+                }
+                // Both the joysticks are active (Combos)
+                else {
+                    if (rYBox == 1) {
+                        if (lXBox == 1) {
+                            powMat = {1, 0, 
+                                      0, 1};
+                        }
+                        else if (lXBox == -1) {
+                            powMat = {0, 1,
+                                      1, 0};
+                        }
+                    }
+                    else if (rYBox == -1) {
+                        if (lXBox == 1) {
+                            powMat = {0, -1, 
+                                      -1, 0};
+                        }
+                        else if (lXBox == -1) {
+                            powMat = {-1, 0,
+                                      0, -1};
+                        }
+                    }
+                }
 
-            float dz = CONFIG.CONTROLLER.PROCCESS_DEADZONE;
-            float th = CONFIG.DRIVETRAIN.THROTTLE;
+            // Turning
+                if (pad.left_bumper) {
+                    powMat = {-1, 1, 
+                              -1, 1};
+                }
+                if (pad.right_bumper) {
+                    powMat = {1, -1, 
+                              1, -1};
+                }
+            }
+            else if (CONFIG.CONTROLLER.ADVANCED_CONTROL) {
+                // Only the left joystick is active
+                if ( (lXBox != 0 || lYBox != 0) && (rXBox == 0 && rYBox == 0) ) {
+                    switch(lXBox) {
+                        case 0:
+                            break;
+                        case 1:
+                            powerMat = {1, -1, 
+                                        -1, 1};
+                        case -1:
+                            powMat = {-1, 1, 
+                                    1, -1};
+                        default:
+                            break;
+                    }
+                    switch(lYBox)
+                        case 0:
+                            break;
+                        case 1:
+                            powMat = {1, 1, 
+                                    1, 1};
+                            break;
+                        case -1:
+                            powMat = {-1, -1, 
+                                    -1, -1};
+                        default:
+                            break;
+                    }
+                } 
+                // Only the right joystick is active
+                else if ( (lXBox == 0 && lYBox == 0 ) && (rXBox != 0 || rYBox != 0) ) {
 
-            // Array to store what each wheel will do at the end of the end of the cycle
-            // In this order FL, FR, BL, BR
-            float[] wheelMoves = {0, 0, 
-                                  0, 0};
+                }
+                // Both the joysticks are active (Combos)
+                else {
 
-            // Diagonal Movement
-            if (-dz > leftX && dz < leftY) {
-                // D FL
-                wheelMoves = {0, 1, 
-                              1, 0};
+                }
             }
-            if (dz < leftX && -dz > leftY) {
-                // D BL
-                wheelMoves = {0, -1, 
-                              -1, 0};
-            }
-            if (dz < leftX && dz < leftY) {
-                // D FR
-                wheelMoves = {1, 0, 
-                              0, 1};
-            }
-            if (-dz > leftX && -dz > leftY) {
-                // D BL
-                wheelMoves = {-1, 0, 
-                              0, -1};
-            }
+    
+            // Untested replacement for code below
+            // setMotors(motors, powMat);
 
-            mtFL.setPower(wheelMoves[0] * th);
-            mtFR.setPower(wheelMoves[1] * th);
-            mtBL.setPower(wheelMoves[2] * th);
-            mtBR.setPower(wheelMoves[3] * th);
+            mtFL.setPower(powMat[0] * CONFIG.DRIVETRAIN.SPEED);
+            mtFR.setPower(powMat[1] * CONFIG.DRIVETRAIN.SPEED);
+            mtBL.setPower(powMat[2] * CONFIG.DRIVETRAIN.SPEED);
+            mtBR.setPower(powMat[3] * CONFIG.DRIVETRAIN.SPEED);
         }
     }
 
+    public static void setMotors(DcMotor[] motors, float[] matrix) {
+        for (int i = 0; i < motors.length; i++) {
+            motors[i].setPower(matrix[i]);
+        }
+    }
+
+    public static int calcBox(float position, float deadzone) {
+        if (Math.abs(position) > deadzone) {
+            if (position < 0) {
+                return -1;
+            }
+            return 1;
+        } 
+        else {
+            return 0;
+        }
+    }
 }
