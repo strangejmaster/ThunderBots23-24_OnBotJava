@@ -1,0 +1,3 @@
+class Main {
+    // Not yet
+}
