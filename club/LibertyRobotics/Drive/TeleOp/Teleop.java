@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import java.lang.Math;
 
 @TeleOp
-public class Teleop extends OpMode{
+public class Teleop extends OpMode {
     DcMotor mtFL = null; // Front Left
     DcMotor mtFR = null; // Front Right
     DcMotor mtBL = null; // Back Left
@@ -23,6 +23,11 @@ public class Teleop extends OpMode{
     int lYBox = 0;
     int rXBox = 0;
     int rYBox = 0;
+
+    // Quick use CONFIG values
+    float SPEED = CONFIG.DRIVETRAIN.SPEED;
+    float DEADZONE = CONFIG.CONTROLLER.DEADZONE;
+    boolean SMOOTH_DRIVING = CONFIG.CONTROLLER.SMOOTH_DRIVING;
 
     // Array which indicates if a wheel will be powered on this tick (Power Matrix)
     // In this order FL, FR, BL, BR
@@ -63,121 +68,81 @@ public class Teleop extends OpMode{
         if( !gamepad1.atRest() ) {
             powMat = new float[] {0, 0, 
                                   0, 0};
-
-            float DEADZONE = CONFIG.CONTROLLER.DEADZONE;
-            lXBox = calcBox(pad.left_stick_x, DEADZONE);
-            lYBox = calcBox(pad.left_stick_y, DEADZONE);
-            rXBox = calcBox(pad.right_stick_x, DEADZONE);
-            lXBox = calcBox(pad.right_stick_y, DEADZONE);
             
-            if (CONFIG.CONTROLLER.ADVANCED_CONTROL == false) {
-                // Only the left joystick is active
-                if (lXBox != 0 && rYBox == 0) {
-                    switch(lXBox) {
-                        case 0:
-                            break;
-                        case 1:
-                            powMat = new float[]{1, 1, 
-                                    1, 1};
-                            break;
-                        case -1:
-                            powMat = new float[]{-1, -1, 
-                                    -1, -1};
-                        default:
-                            break;
-                    }
-                } 
-                // Only the right joystick is active
-                else if (rYBox != 0 && lXBox == 0) {
-                    switch(rYBox) {
-                        case 0:
-                            break;
-                        case 1:
-                            powerMat = new float[]{1, -1, 
-                                                  -1, 1};
-                        case -1:
-                            powMat =new float[]{-1, 1, 
-                                                  1, -1};
-                        default:
-                            break;
-                    }
+            
+            // Y values must be inverted as going up is -1
+            lXBox = calcBox(pad.left_stick_x, DEADZONE);
+            lYBox = calcBox(-pad.left_stick_y, DEADZONE);
+            rXBox = calcBox(pad.right_stick_x, DEADZONE);
+            lXBox = calcBox(-pad.right_stick_y, DEADZONE);
+        
+            // Only the left joystick is active
+            if (lXBox != 0 && rYBox == 0) {
+                switch(lXBox) {
+                    case 0:
+                        break;
+                    case 1:
+                        powMat = addMat(powMat, new float[]{1, 1, 
+                                                            1, 1}, SMOOTH_DRIVING);
+                        break;
+                    case -1:
+                        powMat =  addMat(powMat, new float[]{-1, -1, 
+                                                             -1, -1}, SMOOTH_DRIVING);
+                    default:
+                        break;
                 }
-                // Both the joysticks are active (Combos)
-                else {
-                    if (rYBox == 1) {
-                        if (lXBox == 1) {
-                            powMat = new float[]{1, 0, 
-                                                 0, 1};
-                        }
-                        else if (lXBox == -1) {
-                            powMat = new float[]{0, 1,
-                                                 1, 0};
-                        }
-                    }
-                    else if (rYBox == -1) {
-                        if (lXBox == 1) {
-                            powMat = new float[]{0, -1, 
-                                                -1, 0};
-                        }
-                        else if (lXBox == -1) {
-                            powMat = new float[]{-1, 0,
-                                                  0, -1};
-                        }
-                    }
-                }
-
-            // Turning
-                if (pad.left_bumper) {
-                    powMat = new float[]{-1, 1, 
-                                         -1, 1};
-                }
-                if (pad.right_bumper) {
-                    powMat = new float[]{1, -1, 
-                                         1, -1};
+            } 
+            // Only the right joystick is active
+            else if (rYBox != 0 && lXBox == 0) {
+                switch(rYBox) {
+                    case 0:
+                        break;
+                    case 1:
+                        powerMat =  addMat(powMat, new float[]{1, -1, 
+                                                              -1, 1}, SMOOTH_DRIVING);
+                    case -1:
+                        powMat =  addMat(powMat, new float[]{-1, 1, 
+                                                              1, -1}, SMOOTH_DRIVING);
+                    default:
+                        break;
                 }
             }
-            else if (CONFIG.CONTROLLER.ADVANCED_CONTROL) {
-                // Only the left joystick is active
-                if ( (lXBox != 0 || lYBox != 0) && (rXBox == 0 && rYBox == 0) ) {
-                    switch(lXBox) {
-                        case 0:
-                            break;
-                        case 1:
-                            powerMat = new float[]{1, -1, 
-                                                  -1, 1};
-                        case -1:
-                            powMat = new float[]{-1, 1, 
-                                                  1, -1};
-                        default:
-                            break;
+            // Both the joysticks are active (Combos)
+            else {
+                if (rYBox == 1) {
+                    if (lXBox == 1) {
+                        powMat = addMat(powMat, new float[]{1, 0, 
+                                                            0, 1}, SMOOTH_DRIVING);
                     }
-                    switch(lYBox) {
-                        case 0:
-                            break;
-                        case 1:
-                            powMat = new float[]{1, 1, 
-                                                 1, 1};
-                            break;
-                        case -1:
-                            powMat = new float[]{-1, -1, 
-                                                 -1, -1};
-                        default:
-                            break;
+                    else if (lXBox == -1) {
+                        powMat = addMat(powMat, new float[]{0, 1,
+                                                            1, 0}, SMOOTH_DRIVING);
                     }
-                } 
-                // Only the right joystick is active
-                else if ( (lXBox == 0 && lYBox == 0 ) && (rXBox != 0 || rYBox != 0) ) {
-
                 }
-                // Both the joysticks are active (Combos)
-                else {
-
+                else if (rYBox == -1) {
+                    if (lXBox == 1) {
+                        powMat = addMat(powMat, new float[]{0, -1, 
+                                                           -1, 0}, SMOOTH_DRIVING);
+                    }
+                    else if (lXBox == -1) {
+                        powMat = addMat(powMat, new float[]{-1, 0,
+                                                             0, -1}, SMOOTH_DRIVING);
+                    }
                 }
+            }
+
+            // Turning
+            if (pad.left_bumper) {
+                powMat = addMat(powMat, new float[]{-1, 1, 
+                                                    -1, 1}, SMOOTH_DRIVING);
+            }
+            if (pad.right_bumper) {
+                powMat = addMat(powMat, new float[]{1, -1, 
+                                                    1, -1}, SMOOTH_DRIVING);
             }
     
             // Untested replacement for code below
-            // setMotors(motors, powMat);
-            float SPEED = CONFIG.DRIVETRAIN.SPEED;
+            // setMotors(motors, powMat);   
             mtFL.setPower(powMat[0] * SPEED);
             mtFR.setPower(powMat[1] * SPEED);
             mtBL.setPower(powMat[2] * SPEED);
@@ -185,12 +150,26 @@ public class Teleop extends OpMode{
         }
     }
 
+    // Returns an array where each value of matrixB is added to matrixA
+    public static float[] addMat(float[] matrixA, float[] matrixB, boolean smooth) {
+        float[] matrix = matrixA;
+
+        if (!smooth) {
+            return matrixB;
+        }
+        
+        for (int i = 0; i < matrixA.length; i++) {
+            matrix[i] = (matrixA[i] + matrixB[i]);
+        }
+        return matrix;
+    }
+
     public static void setMotors(DcMotor[] motors, float[] matrix) {
         for (int i = 0; i < motors.length; i++) {
             motors[i].setPower(matrix[i]);
         }
     }
-
+   
     public static int calcBox(float position, float deadzone) {
         if (Math.abs(position) > deadzone) {
             if (position < 0) {

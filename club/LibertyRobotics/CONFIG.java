@@ -6,10 +6,9 @@ static class CONFIG {
         // How far a joystick has to move before anything is detected
         final static float DEADZONE = 0.60;
 
-        // More advanced movement + combos, not recommended for competition
-        final static boolean ADVANCED_CONTROL = false;
-
-        // 
+        // **EXPERIMENTAL**
+        // Tries to blend multiple moves together for quicker movement
+        final static boolean SMOOTH_DRIVING = false;
     }
     static class DRIVETRAIN {
         // A value between 0 and 1 which the motor power will be set to
