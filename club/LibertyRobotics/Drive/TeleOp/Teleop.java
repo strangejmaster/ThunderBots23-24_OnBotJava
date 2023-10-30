@@ -65,7 +65,7 @@ public class Teleop extends OpMode {
 
     public void loop() {
         // Once a joystick has left the deadzone check whats going on
-        if( !gamepad1.atRest() ) {
+        if( !pad.atRest() ) {
             powMat = new float[] {0, 0, 
                                   0, 0};
             
@@ -132,11 +132,11 @@ public class Teleop extends OpMode {
             }
 
             // Turning
-            if (pad.left_bumper) {
+            if (pad.left_trigger) {
                 powMat = addMat(powMat, new float[]{-1, 1, 
                                                     -1, 1}, SMOOTH_DRIVING);
             }
-            if (pad.right_bumper) {
+            if (pad.right_trigger) {
                 powMat = addMat(powMat, new float[]{1, -1, 
                                                     1, -1}, SMOOTH_DRIVING);
             }
