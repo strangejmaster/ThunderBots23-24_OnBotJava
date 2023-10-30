@@ -12,7 +12,7 @@ static class CONFIG {
     }
     static class DRIVETRAIN {
         // A value between 0 and 1 which the motor power will be set to
-        final static float SPEED = 1.00;
+        final static float SPEED = 0.25;
 
         // String Values which correspond to the DriverHub's hardware map
         final static String FRONT_RIGHT = "FRMotor";
