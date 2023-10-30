@@ -58,23 +58,23 @@ public class Teleop extends OpMode {
         mtBR.setDirection(DcMotorSimple.Direction.FORWARD);
 
     // Setup Gamepad
-        Gamepad pad = new GamePad();
-        pad.setJoyStickDeadzone(CONFIG.CONTROLLER.DEADZONE);
+        // gamepad1 and gamepad2 are inherited from the OpMode class
+        gamepad1.setJoystickDeadzone(CONFIG.CONTROLLER.DEADZONE);
     }
     
 
     public void loop() {
         // Once a joystick has left the deadzone check whats going on
-        if( !pad.atRest() ) {
+        if( !gamepad1.atRest() ) {
             powMat = new float[] {0, 0, 
                                   0, 0};
             
             
             // Y values must be inverted as going up is -1
-            lXBox = calcBox(pad.left_stick_x, DEADZONE);
-            lYBox = calcBox(-pad.left_stick_y, DEADZONE);
-            rXBox = calcBox(pad.right_stick_x, DEADZONE);
-            lXBox = calcBox(-pad.right_stick_y, DEADZONE);
+            lXBox = calcBox(gamepad1.left_stick_x, DEADZONE);
+            lYBox = calcBox(-gamepad1.left_stick_y, DEADZONE);
+            rXBox = calcBox(gamepad1.right_stick_x, DEADZONE);
+            lXBox = calcBox(-gamepad1.right_stick_y, DEADZONE);
         
             // Only the left joystick is active
             if (lXBox != 0 && rYBox == 0) {
