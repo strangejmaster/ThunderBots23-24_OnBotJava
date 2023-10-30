@@ -86,8 +86,8 @@ public class Teleop extends OpMode {
                                                             1, 1}, SMOOTH_DRIVING);
                         break;
                     case -1:
-                        powMat =  addMat(powMat, new float[]{-1, -1, 
-                                                             -1, -1}, SMOOTH_DRIVING);
+                        powMat = addMat(powMat, new float[]{-1, -1, 
+                                                            -1, -1}, SMOOTH_DRIVING);
                     default:
                         break;
                 }
@@ -159,7 +159,7 @@ public class Teleop extends OpMode {
         }
         
         for (int i = 0; i < matrixA.length; i++) {
-            matrix[i] = (matrixA[i] + matrixB[i]);
+            matrix[i] = (matrixA[i] + matrixB[i]) / 2;
         }
         return matrix;
     }
