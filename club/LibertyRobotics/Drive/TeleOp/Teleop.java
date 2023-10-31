@@ -39,10 +39,15 @@ public class Teleop extends OpMode {
       // Motors are first identified with the 'mt' (Motor)
       // They're then identified with F (Front) or B (Back)
       // Next the side is identified with L (Left) or R (Right)  
-        mtFL = QuickConfigure.motorConfig(CONFIG.DRIVETRAIN.FRONT_LEFT, true);
-        mtFR = QuickConfigure.motorConfig(CONFIG.DRIVETRAIN.FRONT_RIGHT, false);
-        mtBL = QuickConfigure.motorConfig(CONFIG.DRIVETRAIN.BACK_LEFT, true);
-        mtBR = QuickConfigure.motorConfig(CONFIG.DRIVETRAIN.BACK_RIGHT, false);
+        mtFL = hardwareMap.get(DcMotor.class, CONFIG.DRIVETRAIN.FRONT_LEFT);
+        mtFR = hardwareMap.get(DcMotor.class, CONFIG.DRIVETRAIN.FRONT_RIGHT);
+        mtBL = hardwareMap.get(DcMotor.class, CONFIG.DRIVETRAIN.BACK_LEFT);
+        mtBR = hardwareMap.get(DcMotor.class, CONFIG.DRIVETRAIN.BACK_RIGHT);
+
+        mtFL.setDirection(DcMotorSimple.Direction.FORWARD);
+        mtFR.setDirection(DcMotorSimple.Direction.REVERSE);
+        mtBL.setDirection(DcMotorSimple.Direction.FORWARD);
+        mtBR.setDirection(DcMotorSimple.Direction.REVERSE);
 
     // Setup Gamepad
         // gamepad1 and gamepad2 are inherited from the OpMode class
@@ -63,9 +68,9 @@ public class Teleop extends OpMode {
             rXBox = calcBox(gamepad1.right_stick_x, DEADZONE);
             lXBox = calcBox(-gamepad1.right_stick_y, DEADZONE);
         
-            // Only the left joystick is active
-            if (lXBox != 0 && rYBox == 0) {
-                switch(lXBox) {
+            // Only the right joystick is active
+            if (lXBox == 0 && rYBox != 0) {
+                switch(rYBox) {
                     case 0:
                         break;
                     case 1:
@@ -79,9 +84,9 @@ public class Teleop extends OpMode {
                         break;
                 }
             } 
-            // Only the right joystick is active
-            else if (rYBox != 0 && lXBox == 0) {
-                switch(rYBox) {
+            // Only the left joystick is active
+            else if (rYBox == 0 && lXBox != 0) {
+                switch(lXBox) {
                     case 0:
                         break;
                     case 1:
@@ -119,11 +124,11 @@ public class Teleop extends OpMode {
             }
 
             // Turning
-            if (pad.left_trigger > CONFIG.CONTROLLER.TRIGGER_DEADZONE) {
+            if (gamepad1.left_trigger > CONFIG.CONTROLLER.TRIGGER_DEADZONE) {
                 powMat = addMat(powMat, new float[]{-1f, 1f, 
                                                     -1f, 1f}, SMOOTH_DRIVING);
             }
-            if (pad.right_trigger > CONFIG.CONTROLLER.TRIGGER_DEADZONE) {
+            if (gamepad1.right_trigger > CONFIG.CONTROLLER.TRIGGER_DEADZONE) {
                 powMat = addMat(powMat, new float[]{1f, -1f, 
                                                     1f, -1f}, SMOOTH_DRIVING);
             }
