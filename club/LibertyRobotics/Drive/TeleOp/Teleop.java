@@ -1,21 +1,19 @@
 package club.LibertyRobotics.Drive.TeleOp;
 
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-
+import com.qualcomm.robotcore.eventloop.opmode.*;
+import com.qualcomm.robotcore.hardware.*;
 
 import java.lang.Math;
 
 import club.LibertyRobotics.CONFIG;
+import club.LibertyRobotics.Drive.QuickConfigure;
 
 @TeleOp
 public class Teleop extends OpMode {
-    DcMotor mtFL = null; // Front Left
-    DcMotor mtFR = null; // Front Right
-    DcMotor mtBL = null; // Back Left
-    DcMotor mtBR = null; // Back Right
+    // Quick use CONFIG values
+    float SPEED = CONFIG.DRIVETRAIN.SPEED;
+    float DEADZONE = CONFIG.CONTROLLER.STICK_DEADZONE;
+    boolean SMOOTH_DRIVING = CONFIG.CONTROLLER.SMOOTH_DRIVING;
 
     // To make the joysticks easier to understand there are 4 boxes placed on each joystick (Imaginary)
     // If the joystick is in the center the box is 0, right or up is 1, and left or down is -1
@@ -26,32 +24,25 @@ public class Teleop extends OpMode {
     int rXBox = 0;
     int rYBox = 0;
 
-    // Quick use CONFIG values
-    float SPEED = CONFIG.DRIVETRAIN.SPEED;
-    float DEADZONE = CONFIG.CONTROLLER.STICK_DEADZONE;
-    boolean SMOOTH_DRIVING = CONFIG.CONTROLLER.SMOOTH_DRIVING;
-
     // Array which indicates if a wheel will be powered on this tick (Power Matrix)
     // In this order FL, FR, BL, BR
     float[] powMat = {0f, 0f, 
                       0f, 0f};
 
+    DcMotor mtFL = null; // Front Left
+    DcMotor mtFR = null; // Front Right
+    DcMotor mtBL = null; // Back Left
+    DcMotor mtBR = null; // Back Right
+
     public void init() {
     // Setup motors
-        // Motors are first identified with the 'mt' (Motor)
-        // They're then identified with F (Front) or B (Back)
-        // Next the side is identified with L (Left) or R (Right) 
-        
-        // Map the motors
-        mtFR = hardwareMap.get(DcMotor.class, CONFIG.DRIVETRAIN.FRONT_RIGHT);
-        mtFL = hardwareMap.get(DcMotor.class, CONFIG.DRIVETRAIN.FRONT_LEFT);
-        mtBR = hardwareMap.get(DcMotor.class, CONFIG.DRIVETRAIN.BACK_RIGHT);
-        mtBL = hardwareMap.get(DcMotor.class, CONFIG.DRIVETRAIN.BACK_LEFT);
-
-        mtFL.setDirection(DcMotorSimple.Direction.FORWARD);
-        mtFR.setDirection(DcMotorSimple.Direction.REVERSE);
-        mtBL.setDirection(DcMotorSimple.Direction.FORWARD);
-        mtBR.setDirection(DcMotorSimple.Direction.REVERSE);
+      // Motors are first identified with the 'mt' (Motor)
+      // They're then identified with F (Front) or B (Back)
+      // Next the side is identified with L (Left) or R (Right)  
+        mtFL = QuickConfigure.motorConfig(CONFIG.DRIVETRAIN.FRONT_LEFT, true);
+        mtFR = QuickConfigure.motorConfig(CONFIG.DRIVETRAIN.FRONT_RIGHT, false);
+        mtBL = QuickConfigure.motorConfig(CONFIG.DRIVETRAIN.BACK_LEFT, true);
+        mtBR = QuickConfigure.motorConfig(CONFIG.DRIVETRAIN.BACK_RIGHT, false);
 
     // Setup Gamepad
         // gamepad1 and gamepad2 are inherited from the OpMode class
