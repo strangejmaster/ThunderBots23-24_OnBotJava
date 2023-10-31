@@ -50,7 +50,7 @@ public class Teleop extends OpMode {
 
     // Setup Gamepad
         // gamepad1 and gamepad2 are inherited from the OpMode class
-        gamepad1.setJoystickDeadzone(CONFIG.CONTROLLER.STICK_DEADZONE);
+        gamepad1.setJoystickDeadzone(STICK_DEADZONE);
     }
     
 

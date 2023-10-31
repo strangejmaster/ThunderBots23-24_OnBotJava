@@ -9,13 +9,13 @@ public public final class CONFIG {
         // Minimum deadzone before the triggers activate
         public final static float TRIGGER_DEADZONE = 0.40f;
 
-        // **EXPERIMENTAL**
+        // **EXPERIMENTAL** (NOW RECOMMENEDED)
         // Tries to blend multiple moves together for quicker movement
-        public final static boolean SMOOTH_DRIVING = false;
+        public final static boolean SMOOTH_DRIVING = true;
     }
     public public final class DRIVETRAIN {
         // A value between 0 and 1 which the motor power will be set to
-        public final static float SPEED = 0.25f;
+        public final static float SPEED = 0.15f;
 
         // Radius of the drive train wheels in mm
         public final static float WHEEL_RADIUS = 6.0f;
