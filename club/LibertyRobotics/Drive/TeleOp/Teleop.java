@@ -4,7 +4,11 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+
+
 import java.lang.Math;
+
+import club.LibertyRobotics.CONFIG;
 
 @TeleOp
 public class Teleop extends OpMode {
@@ -12,8 +16,6 @@ public class Teleop extends OpMode {
     DcMotor mtFR = null; // Front Right
     DcMotor mtBL = null; // Back Left
     DcMotor mtBR = null; // Back Right
-
-    DcMotor[] motors = {mtFL, mtFR, mtBL, mtBR};
 
     // To make the joysticks easier to understand there are 4 boxes placed on each joystick (Imaginary)
     // If the joystick is in the center the box is 0, right or up is 1, and left or down is -1
@@ -26,13 +28,13 @@ public class Teleop extends OpMode {
 
     // Quick use CONFIG values
     float SPEED = CONFIG.DRIVETRAIN.SPEED;
-    float DEADZONE = CONFIG.CONTROLLER.DEADZONE;
+    float DEADZONE = CONFIG.CONTROLLER.STICK_DEADZONE;
     boolean SMOOTH_DRIVING = CONFIG.CONTROLLER.SMOOTH_DRIVING;
 
     // Array which indicates if a wheel will be powered on this tick (Power Matrix)
     // In this order FL, FR, BL, BR
-    float[] powMat = {0, 0, 
-                      0, 0};
+    float[] powMat = {0f, 0f, 
+                      0f, 0f};
 
     public void init() {
     // Setup motors
@@ -46,16 +48,10 @@ public class Teleop extends OpMode {
         mtBR = hardwareMap.get(DcMotor.class, CONFIG.DRIVETRAIN.BACK_RIGHT);
         mtBL = hardwareMap.get(DcMotor.class, CONFIG.DRIVETRAIN.BACK_LEFT);
 
-        // Apply configuration settings to the motors quickly
-        for (int i = 0; i < motors.length; i++) {
-            motors[i].setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            motors[i].setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        }
-
         mtFL.setDirection(DcMotorSimple.Direction.FORWARD);
-        mtFR.setDirection(DcMotorSimple.Direction.FORWARD);
+        mtFR.setDirection(DcMotorSimple.Direction.REVERSE);
         mtBL.setDirection(DcMotorSimple.Direction.FORWARD);
-        mtBR.setDirection(DcMotorSimple.Direction.FORWARD);
+        mtBR.setDirection(DcMotorSimple.Direction.REVERSE);
 
     // Setup Gamepad
         // gamepad1 and gamepad2 are inherited from the OpMode class
@@ -66,11 +62,11 @@ public class Teleop extends OpMode {
     public void loop() {
         // Once a joystick has left the deadzone check whats going on
         if( !gamepad1.atRest() ) {
-            powMat = new float[] {0, 0, 
-                                  0, 0};
+            powMat = new float[] {0f, 0f, 
+                                  0f, 0f};
             
             
-            // Y values must be inverted as going up is -1
+            // Y-values are inverted on gamepad as up returns negative values
             lXBox = calcBox(gamepad1.left_stick_x, DEADZONE);
             lYBox = calcBox(-gamepad1.left_stick_y, DEADZONE);
             rXBox = calcBox(gamepad1.right_stick_x, DEADZONE);
@@ -82,12 +78,12 @@ public class Teleop extends OpMode {
                     case 0:
                         break;
                     case 1:
-                        powMat = addMat(powMat, new float[]{1, 1, 
-                                                            1, 1}, SMOOTH_DRIVING);
+                        powMat = addMat(powMat, new float[]{1f, 1f, 
+                                                            1f, 1f}, SMOOTH_DRIVING);
                         break;
                     case -1:
-                        powMat = addMat(powMat, new float[]{-1, -1, 
-                                                            -1, -1}, SMOOTH_DRIVING);
+                        powMat = addMat(powMat, new float[]{-1f, -1f, 
+                                                            -1f, -1f}, SMOOTH_DRIVING);
                     default:
                         break;
                 }
@@ -98,11 +94,11 @@ public class Teleop extends OpMode {
                     case 0:
                         break;
                     case 1:
-                        powerMat =  addMat(powMat, new float[]{1, -1, 
-                                                              -1, 1}, SMOOTH_DRIVING);
+                        powerMat =  addMat(powMat, new float[]{1f, -1f, 
+                                                              -1f, 1f}, SMOOTH_DRIVING);
                     case -1:
-                        powMat =  addMat(powMat, new float[]{-1, 1, 
-                                                              1, -1}, SMOOTH_DRIVING);
+                        powMat =  addMat(powMat, new float[]{-1f, 1f, 
+                                                              1f, -1f}, SMOOTH_DRIVING);
                     default:
                         break;
                 }
@@ -111,38 +107,36 @@ public class Teleop extends OpMode {
             else {
                 if (rYBox == 1) {
                     if (lXBox == 1) {
-                        powMat = addMat(powMat, new float[]{1, 0, 
-                                                            0, 1}, SMOOTH_DRIVING);
+                        powMat = addMat(powMat, new float[]{1f, 0f, 
+                                                            0f, 1f}, SMOOTH_DRIVING);
                     }
                     else if (lXBox == -1) {
-                        powMat = addMat(powMat, new float[]{0, 1,
-                                                            1, 0}, SMOOTH_DRIVING);
+                        powMat = addMat(powMat, new float[]{0f, 1f,
+                                                            1f, 0f}, SMOOTH_DRIVING);
                     }
                 }
                 else if (rYBox == -1) {
                     if (lXBox == 1) {
-                        powMat = addMat(powMat, new float[]{0, -1, 
-                                                           -1, 0}, SMOOTH_DRIVING);
+                        powMat = addMat(powMat, new float[]{0f, -1f, 
+                                                           -1f, 0f}, SMOOTH_DRIVING);
                     }
                     else if (lXBox == -1) {
-                        powMat = addMat(powMat, new float[]{-1, 0,
-                                                             0, -1}, SMOOTH_DRIVING);
+                        powMat = addMat(powMat, new float[]{-1f, 0f,
+                                                             0f, -1f}, SMOOTH_DRIVING);
                     }
                 }
             }
 
             // Turning
-            if (pad.left_trigger) {
-                powMat = addMat(powMat, new float[]{-1, 1, 
-                                                    -1, 1}, SMOOTH_DRIVING);
+            if (pad.left_trigger > CONFIG.CONTROLLER.TRIGGER_DEADZONE) {
+                powMat = addMat(powMat, new float[]{-1f, 1f, 
+                                                    -1f, 1f}, SMOOTH_DRIVING);
             }
-            if (pad.right_trigger) {
-                powMat = addMat(powMat, new float[]{1, -1, 
-                                                    1, -1}, SMOOTH_DRIVING);
+            if (pad.right_trigger > CONFIG.CONTROLLER.TRIGGER_DEADZONE) {
+                powMat = addMat(powMat, new float[]{1f, -1f, 
+                                                    1f, -1f}, SMOOTH_DRIVING);
             }
-    
-            // Untested replacement for code below
-            // setMotors(motors, powMat);   
+      
             mtFL.setPower(powMat[0] * SPEED);
             mtFR.setPower(powMat[1] * SPEED);
             mtBL.setPower(powMat[2] * SPEED);
@@ -159,15 +153,9 @@ public class Teleop extends OpMode {
         }
         
         for (int i = 0; i < matrixA.length; i++) {
-            matrix[i] = (matrixA[i] + matrixB[i]) / 2;
+            matrix[i] = (matrixA[i] + matrixB[i]) / 2.0f;
         }
         return matrix;
-    }
-
-    public static void setMotors(DcMotor[] motors, float[] matrix) {
-        for (int i = 0; i < motors.length; i++) {
-            motors[i].setPower(matrix[i]);
-        }
     }
    
     public static int calcBox(float position, float deadzone) {
