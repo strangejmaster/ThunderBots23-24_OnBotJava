@@ -6,13 +6,12 @@ import com.qualcomm.robotcore.hardware.*;
 import java.lang.Math;
 
 import club.LibertyRobotics.CONFIG;
-import club.LibertyRobotics.Drive.QuickConfigure;
 
 @TeleOp
 public class Teleop extends OpMode {
     // Quick use CONFIG values
     float SPEED = CONFIG.DRIVETRAIN.SPEED;
-    float DEADZONE = CONFIG.CONTROLLER.STICK_DEADZONE;
+    float STICK_DEADZONE = CONFIG.CONTROLLER.STICK_DEADZONE;
     boolean SMOOTH_DRIVING = CONFIG.CONTROLLER.SMOOTH_DRIVING;
 
     // To make the joysticks easier to understand there are 4 boxes placed on each joystick (Imaginary)
@@ -51,26 +50,26 @@ public class Teleop extends OpMode {
 
     // Setup Gamepad
         // gamepad1 and gamepad2 are inherited from the OpMode class
-        gamepad1.setJoystickDeadzone(CONFIG.CONTROLLER.DEADZONE);
+        gamepad1.setJoystickDeadzone(CONFIG.CONTROLLER.STICK_DEADZONE);
     }
     
 
     public void loop() {
         // Once a joystick has left the deadzone check whats going on
         if( !gamepad1.atRest() ) {
-            powMat = new float[] {0f, 0f, 
+            powMat = new float[] {0f, 0f,
                                   0f, 0f};
             
             
             // Y-values are inverted on gamepad as up returns negative values
-            lXBox = calcBox(gamepad1.left_stick_x, DEADZONE);
-            lYBox = calcBox(-gamepad1.left_stick_y, DEADZONE);
-            rXBox = calcBox(gamepad1.right_stick_x, DEADZONE);
-            lXBox = calcBox(-gamepad1.right_stick_y, DEADZONE);
+            lXBox = calcBox(gamepad1.left_stick_x, STICK_DEADZONE);
+            lYBox = calcBox(-gamepad1.left_stick_y, STICK_DEADZONE);
+            rXBox = calcBox(gamepad1.right_stick_x, STICK_DEADZONE);
+            lXBox = calcBox(-gamepad1.right_stick_y, STICK_DEADZONE);
         
-            // Only the right joystick is active
-            if (lXBox == 0 && rYBox != 0) {
-                switch(rYBox) {
+            // Only the left joystick is active
+            if (lYBox != 0 && rXBox == 0) {
+                switch(lYBox) {
                     case 0:
                         break;
                     case 1:
@@ -84,13 +83,13 @@ public class Teleop extends OpMode {
                         break;
                 }
             } 
-            // Only the left joystick is active
-            else if (rYBox == 0 && lXBox != 0) {
-                switch(lXBox) {
+            // Only the right joystick is active
+            else if (rXBox != 0 && lYBox == 0) {
+                switch(rXBox) {
                     case 0:
                         break;
                     case 1:
-                        powerMat =  addMat(powMat, new float[]{1f, -1f, 
+                        powMat =  addMat(powMat, new float[]{1f, -1f, 
                                                               -1f, 1f}, SMOOTH_DRIVING);
                     case -1:
                         powMat =  addMat(powMat, new float[]{-1f, 1f, 
@@ -101,22 +100,22 @@ public class Teleop extends OpMode {
             }
             // Both the joysticks are active (Combos)
             else {
-                if (rYBox == 1) {
-                    if (lXBox == 1) {
+                if (lYBox == 1) {
+                    if (rXBox == 1) {
                         powMat = addMat(powMat, new float[]{1f, 0f, 
                                                             0f, 1f}, SMOOTH_DRIVING);
                     }
-                    else if (lXBox == -1) {
+                    else if (rXBox == -1) {
                         powMat = addMat(powMat, new float[]{0f, 1f,
                                                             1f, 0f}, SMOOTH_DRIVING);
                     }
                 }
-                else if (rYBox == -1) {
-                    if (lXBox == 1) {
+                else if (lYBox == -1) {
+                    if (rXBox == 1) {
                         powMat = addMat(powMat, new float[]{0f, -1f, 
                                                            -1f, 0f}, SMOOTH_DRIVING);
                     }
-                    else if (lXBox == -1) {
+                    else if (rXBox == -1) {
                         powMat = addMat(powMat, new float[]{-1f, 0f,
                                                              0f, -1f}, SMOOTH_DRIVING);
                     }
