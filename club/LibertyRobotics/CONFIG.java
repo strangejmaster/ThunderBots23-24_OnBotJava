@@ -1,8 +1,8 @@
 package club.LibertyRobotics;
 
 // This file contains all configuration stuff
-public public final class CONFIG {
-    public public final class CONTROLLER {
+public final class CONFIG {
+    public final class CONTROLLER {
         // How far a joystick has to move before anything is detected
         public final static float STICK_DEADZONE = 0.60f;
         
@@ -13,7 +13,7 @@ public public final class CONFIG {
         // Tries to blend multiple moves together for quicker movement
         public final static boolean SMOOTH_DRIVING = true;
     }
-    public public final class DRIVETRAIN {
+    public final class DRIVETRAIN {
         // A value between 0 and 1 which the motor power will be set to
         public final static float SPEED = 0.15f;
 
