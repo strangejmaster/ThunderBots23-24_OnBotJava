@@ -1,5 +1,5 @@
 package club.LibertyRobotics.Drive.Auto;
 
-public class moveMeters {
+public class MoveDistance {
     // AHHHHHHHHHHHHHHHHHHHHHHHHHHHHh
 }
