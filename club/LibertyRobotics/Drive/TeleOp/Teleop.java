@@ -13,6 +13,8 @@ public class Teleop extends OpMode {
     float SPEED = CONFIG.DRIVETRAIN.SPEED;
     float STICK_DEADZONE = CONFIG.CONTROLLER.STICK_DEADZONE;
     boolean SMOOTH_DRIVING = CONFIG.CONTROLLER.SMOOTH_DRIVING;
+    float[][][] DRIVE_ARRAY = CONFIG.CONTROLLER.DRIVE_ARRAY;
+    int DRIVE_MODE = CONFIG.CONTROLLER.DRIVE_MODE;
 
     // To make the joysticks easier to understand there are 4 boxes placed on each joystick (Imaginary)
     // If the joystick is in the center the box is 0, right or up is 1, and left or down is -1
@@ -67,69 +69,40 @@ public class Teleop extends OpMode {
             rXBox = calcBox(gamepad1.right_stick_x, STICK_DEADZONE);
             lXBox = calcBox(-gamepad1.right_stick_y, STICK_DEADZONE);
         
-            // Only the left joystick is active
-            if (lYBox != 0 && rXBox == 0) {
+            // Left joystick is active
+            if (lYBox != 0) {
                 switch(lYBox) {
                     case 0:
                         break;
                     case 1:
-                        powMat = addMat(powMat, new float[]{1f, 1f, 
-                                                            1f, 1f}, SMOOTH_DRIVING);
+                        powMat = addMat(powMat, DRIVE_ARRAY[DRIVE_MODE][0], SMOOTH_DRIVING);
                         break;
                     case -1:
-                        powMat = addMat(powMat, new float[]{-1f, -1f, 
-                                                            -1f, -1f}, SMOOTH_DRIVING);
+                        powMat = addMat(powMat, DRIVE_ARRAY[DRIVE_MODE][1], SMOOTH_DRIVING);
                     default:
                         break;
                 }
             } 
-            // Only the right joystick is active
-            else if (rXBox != 0 && lYBox == 0) {
+            // Right joystick is active
+            if (rXBox != 0) {
                 switch(rXBox) {
                     case 0:
                         break;
                     case 1:
-                        powMat =  addMat(powMat, new float[]{1f, -1f, 
-                                                              -1f, 1f}, SMOOTH_DRIVING);
+                        powMat =  addMat(powMat, DRIVE_ARRAY[DRIVE_MODE][2], SMOOTH_DRIVING);
                     case -1:
-                        powMat =  addMat(powMat, new float[]{-1f, 1f, 
-                                                              1f, -1f}, SMOOTH_DRIVING);
+                        powMat =  addMat(powMat, DRIVE_ARRAY[DRIVE_MODE][3], SMOOTH_DRIVING);
                     default:
                         break;
-                }
-            }
-            // Both the joysticks are active (Combos)
-            else {
-                if (lYBox == 1) {
-                    if (rXBox == 1) {
-                        powMat = addMat(powMat, new float[]{1f, 0f, 
-                                                            0f, 1f}, SMOOTH_DRIVING);
-                    }
-                    else if (rXBox == -1) {
-                        powMat = addMat(powMat, new float[]{0f, 1f,
-                                                            1f, 0f}, SMOOTH_DRIVING);
-                    }
-                }
-                else if (lYBox == -1) {
-                    if (rXBox == 1) {
-                        powMat = addMat(powMat, new float[]{0f, -1f, 
-                                                           -1f, 0f}, SMOOTH_DRIVING);
-                    }
-                    else if (rXBox == -1) {
-                        powMat = addMat(powMat, new float[]{-1f, 0f,
-                                                             0f, -1f}, SMOOTH_DRIVING);
-                    }
                 }
             }
 
             // Turning
             if (gamepad1.left_trigger > CONFIG.CONTROLLER.TRIGGER_DEADZONE) {
-                powMat = addMat(powMat, new float[]{-1f, 1f, 
-                                                    -1f, 1f}, SMOOTH_DRIVING);
+                powMat = addMat(powMat, DRIVE_ARRAY[DRIVE_MODE][4], SMOOTH_DRIVING);
             }
             if (gamepad1.right_trigger > CONFIG.CONTROLLER.TRIGGER_DEADZONE) {
-                powMat = addMat(powMat, new float[]{1f, -1f, 
-                                                    1f, -1f}, SMOOTH_DRIVING);
+                powMat = addMat(powMat, DRIVE_ARRAY[DRIVE_MODE][5], SMOOTH_DRIVING);
             }
       
             mtFL.setPower(powMat[0] * SPEED);
