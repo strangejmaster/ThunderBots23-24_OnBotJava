@@ -113,4 +113,13 @@ public final class CONFIG {
         public final static String BACK_RIGHT = "BRMotor";
         public final static String BACK_LEFT = "BLMotor";
     }
+
+    public final class CONTROL_SURFACES {
+        public final static String HOOK_MOTOR = "HMotor";
+
+        // String value that corresponds to the servo device for the servo which launches the paper airplane
+        public final static String SERVO_PLANE = "SERPlane";
+        // The servo's range in degrees, [0] is the minimum range, [1] is the maximum range
+        public final static int[] SERVO_PLANE_RANGE = {0, 360};
+    }
 }

@@ -30,10 +30,15 @@ public class Teleop extends OpMode {
     float[] powMat = {0f, 0f, 
                       0f, 0f};
 
+    // Drivetrain motors
     DcMotor mtFL = null; // Front Left
     DcMotor mtFR = null; // Front Right
     DcMotor mtBL = null; // Back Left
     DcMotor mtBR = null; // Back Right
+    
+    // Control Surfaces
+    // paLa = Plane Launcher
+    Servo paLa = null;
 
     public void init() {
     // Setup motors
@@ -47,17 +52,19 @@ public class Teleop extends OpMode {
 
         mtFL.setDirection(DcMotorSimple.Direction.FORWARD);
         mtFR.setDirection(DcMotorSimple.Direction.REVERSE);
-        mtBL.setDirection(DcMotorSimple.Direction.FORWARD);
-        mtBR.setDirection(DcMotorSimple.Direction.REVERSE);
+        mtBL.setDirection(DcMotorSimple.Direction.REVERSE);
+        mtBR.setDirection(DcMotorSimple.Direction.FORWARD);
 
-    // Setup Gamepad
-        // gamepad1 and gamepad2 are inherited from the OpMode class
-        gamepad1.setJoystickDeadzone(STICK_DEADZONE);
+
+        // Configure paLa
+        paLa = hardwareMap.get(Servo.class, CONFIG.CONTROL_SURFACES.SERVO_PLANE);
+        int[] paLaRange = CONFIG.CONTROL_SURFACES.SERVO_PLANE_RANGE[0];
+        // Scale paLa rotation range to specified range (Also convert from 0 to 360 degrees from 0 to 1 max)
+        paLa.scaleRange( (paLaRange[0] / 360), (paLaRange[1] / 360) );
     }
-    
 
     public void loop() {
-        // Once a joystick has left the deadzone check whats going on
+        // GAMEPAD 1 CONFIGURATION (DRIVETRAIN DRIVER)
         if( !gamepad1.atRest() ) {
             powMat = new float[] {0f, 0f,
                                   0f, 0f};
@@ -96,13 +103,77 @@ public class Teleop extends OpMode {
                         break;
                 }
             }
-
+            
             // Turning
             if (gamepad1.left_trigger > CONFIG.CONTROLLER.TRIGGER_DEADZONE) {
                 powMat = addMat(powMat, DRIVE_ARRAY[DRIVE_MODE][4], SMOOTH_DRIVING);
             }
             if (gamepad1.right_trigger > CONFIG.CONTROLLER.TRIGGER_DEADZONE) {
                 powMat = addMat(powMat, DRIVE_ARRAY[DRIVE_MODE][5], SMOOTH_DRIVING);
+            }
+
+            // If the gamepad's x button is pressed launch the plane
+            if (gamepad1.x) {
+                paLa.setPosition( paLa.getPosition() + (1.0 / 360.0) );
+            }
+      
+            mtFL.setPower(powMat[0] * SPEED);
+            mtFR.setPower(powMat[1] * SPEED);
+            mtBL.setPower(powMat[2] * SPEED);
+            mtBR.setPower(powMat[3] * SPEED);
+        }
+
+        // GAMEPAD 2 CONFIGURATION (CONTROLSURFACE DRIVER)
+        if( !gamepad2.atRest() ) {
+            powMat = new float[] {0f, 0f,
+                                  0f, 0f};
+            
+            
+            // Y-values are inverted on gamepad as up returns negative values
+            lXBox = calcBox(gamepad1.left_stick_x, STICK_DEADZONE);
+            lYBox = calcBox(-gamepad1.left_stick_y, STICK_DEADZONE);
+            rXBox = calcBox(gamepad1.right_stick_x, STICK_DEADZONE);
+            lXBox = calcBox(-gamepad1.right_stick_y, STICK_DEADZONE);
+        
+            // Left joystick is active
+            if (lYBox != 0) {
+                switch(lYBox) {
+                    case 0:
+                        break;
+                    case 1:
+                        powMat = addMat(powMat, DRIVE_ARRAY[DRIVE_MODE][0], SMOOTH_DRIVING);
+                        break;
+                    case -1:
+                        powMat = addMat(powMat, DRIVE_ARRAY[DRIVE_MODE][1], SMOOTH_DRIVING);
+                    default:
+                        break;
+                }
+            } 
+            // Right joystick is active
+            if (rXBox != 0) {
+                switch(rXBox) {
+                    case 0:
+                        break;
+                    case 1:
+                        powMat =  addMat(powMat, DRIVE_ARRAY[DRIVE_MODE][2], SMOOTH_DRIVING);
+                    case -1:
+                        powMat =  addMat(powMat, DRIVE_ARRAY[DRIVE_MODE][3], SMOOTH_DRIVING);
+                    default:
+                        break;
+                }
+            }
+            
+            // Turning
+            if (gamepad1.left_trigger > CONFIG.CONTROLLER.TRIGGER_DEADZONE) {
+                powMat = addMat(powMat, DRIVE_ARRAY[DRIVE_MODE][4], SMOOTH_DRIVING);
+            }
+            if (gamepad1.right_trigger > CONFIG.CONTROLLER.TRIGGER_DEADZONE) {
+                powMat = addMat(powMat, DRIVE_ARRAY[DRIVE_MODE][5], SMOOTH_DRIVING);
+            }
+
+            // If the gamepad's x button is pressed launch the plane
+            if (gamepad1.x) {
+
             }
       
             mtFL.setPower(powMat[0] * SPEED);
