@@ -6,10 +6,10 @@ import com.qualcomm.robotcore.hardware.*;
 public final class CONFIG {
     public final class CONTROLLER {
         // How far a joystick has to move before anything is detected
-        public final static float STICK_DEADZONE = 0.30f;
+        public final static float STICK_DEADZONE = 0.40f;
         
         // Minimum deadzone before the triggers activate
-        public final static float TRIGGER_DEADZONE = 0.40f;
+        public final static float TRIGGER_DEADZONE = 0.50f;
 
         // **EXPERIMENTAL** (NOW RECOMMENEDED)
         // Tries to blend multiple moves together for quicker movement
@@ -20,7 +20,7 @@ public final class CONFIG {
     }
     public final class DRIVETRAIN {
         // A value between 0 and 1 which the motor power will be set to
-        public final static float SPEED = 0.50f;
+        public final static float SPEED = 0.60f;
 
         // Radius of the drive train wheels in mm
         public final static float WHEEL_RADIUS = 6.0f;
@@ -39,12 +39,12 @@ public final class CONFIG {
     }
 
     public final class CONTROL_SURFACES {
-        public final static String HOOK_MOTOR = "HMotor";
+        // public final static String HOOK_MOTOR = "HMotor";
 
         // String value that corresponds to the servo device for the servo which launches the paper airplane
-        public final static String SERVO_PLANE = "SERPlane";
-        // The servo's range in degrees, [0] is the minimum range, [1] is the maximum range
-        public final static int[] SERVO_PLANE_RANGE = {0, 360};
+        public final static String DRONE = "arm";
         
+        // The servo's range in degrees, [0] is the minimum range, [1] is the maximum range
+        public final static int[] SERVO_PLANE_RANGE = new int[]{0, 360};
     }
 }
