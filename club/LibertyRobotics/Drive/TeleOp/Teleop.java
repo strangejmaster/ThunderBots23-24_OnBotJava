@@ -13,6 +13,64 @@ public class Teleop extends OpMode {
     float SPEED = CONFIG.DRIVETRAIN.SPEED;
     float STICK_DEADZONE = CONFIG.CONTROLLER.STICK_DEADZONE;
     boolean SMOOTH_DRIVING = CONFIG.CONTROLLER.SMOOTH_DRIVING;
+    int DRIVE_MODE = CONFIG.CONTROLLER.DRIVE_MODE;
+
+    // Power Matrixes for different modes
+    public final static float[][][] DRIVE_ARRAY = {
+        // Mecanum Driving
+        {
+            // Left-Stick Up
+            {1f, 1f, 
+            1f, 1f},
+
+            // Left-Stick Down
+            {-1f, -1f, 
+            -1f, -1f},
+
+            // Right-Stick Right
+            {1f, -1f, 
+            -1f, 1f},
+
+            // Right-Stick Left
+            {-1f, 1f, 
+            1f, -1f},
+
+            // Left Trigger
+            {1f, -1f, 
+            1f, -1f},
+
+            // Right Trigger
+            {-1f, 1f, 
+            -1f, 1f}
+        },
+
+        // Arcade Driving
+        {
+            // Left-Stick Up
+            {1f, 1f, 
+            1f, 1f},
+
+            // Left-Stick Down
+            {-1f, -1f, 
+            -1f, -1f},
+
+            // Right-Stick Right
+            {1f, 0f, 
+            1f, 0f},
+
+            // Right-Stick Left
+            {0f, 1f, 
+            0f, 1f},
+
+            // Left Trigger
+            {0f, 0f, 
+            0f, 0f},
+
+            // Right Trigger
+            {0f, 0f, 
+            0f, 0f}
+        }
+    };
 
     // To make the joysticks easier to understand there are 4 boxes placed on each joystick (Imaginary)
     // If the joystick is in the center the box is 0, right or up is 1, and left or down is -1
@@ -28,10 +86,15 @@ public class Teleop extends OpMode {
     float[] powMat = {0f, 0f, 
                       0f, 0f};
 
+    // Drivetrain motors
     DcMotor mtFL = null; // Front Left
     DcMotor mtFR = null; // Front Right
     DcMotor mtBL = null; // Back Left
     DcMotor mtBR = null; // Back Right
+    
+    // Control Surfaces
+    // paLa = Plane Launcher
+    Servo paLa = null;
 
     public void init() {
     // Setup motors
@@ -42,20 +105,22 @@ public class Teleop extends OpMode {
         mtFR = hardwareMap.get(DcMotor.class, CONFIG.DRIVETRAIN.FRONT_RIGHT);
         mtBL = hardwareMap.get(DcMotor.class, CONFIG.DRIVETRAIN.BACK_LEFT);
         mtBR = hardwareMap.get(DcMotor.class, CONFIG.DRIVETRAIN.BACK_RIGHT);
+        
+        mtFL.setDirection(intToDir(CONFIG.DRIVETRAIN.FL_DIR));
+        mtFR.setDirection(intToDir(CONFIG.DRIVETRAIN.FR_DIR));
+        mtBL.setDirection(intToDir(CONFIG.DRIVETRAIN.BL_DIR));
+        mtBR.setDirection(intToDir(CONFIG.DRIVETRAIN.BR_DIR));
 
-        mtFL.setDirection(DcMotorSimple.Direction.FORWARD);
-        mtFR.setDirection(DcMotorSimple.Direction.REVERSE);
-        mtBL.setDirection(DcMotorSimple.Direction.FORWARD);
-        mtBR.setDirection(DcMotorSimple.Direction.REVERSE);
 
-    // Setup Gamepad
-        // gamepad1 and gamepad2 are inherited from the OpMode class
-        gamepad1.setJoystickDeadzone(STICK_DEADZONE);
+        // Configure paLa
+        paLa = hardwareMap.get(Servo.class, CONFIG.CONTROL_SURFACES.SERVO_PLANE);
+        int[] paLaRange = CONFIG.CONTROL_SURFACES.SERVO_PLANE_RANGE[0];
+        // Scale paLa rotation range to specified range (Also convert from 0 to 360 degrees from 0 to 1 max)
+        paLa.scaleRange( (paLaRange[0] / 360), (paLaRange[1] / 360) );
     }
-    
 
     public void loop() {
-        // Once a joystick has left the deadzone check whats going on
+        // GAMEPAD 1 CONFIGURATION (DRIVETRAIN DRIVER)
         if( !gamepad1.atRest() ) {
             powMat = new float[] {0f, 0f,
                                   0f, 0f};
@@ -67,76 +132,113 @@ public class Teleop extends OpMode {
             rXBox = calcBox(gamepad1.right_stick_x, STICK_DEADZONE);
             lXBox = calcBox(-gamepad1.right_stick_y, STICK_DEADZONE);
         
-            // Only the left joystick is active
-            if (lYBox != 0 && rXBox == 0) {
+            // Left joystick is active
+            if (lYBox != 0) {
                 switch(lYBox) {
                     case 0:
                         break;
                     case 1:
-                        powMat = addMat(powMat, new float[]{1f, 1f, 
-                                                            1f, 1f}, SMOOTH_DRIVING);
+                        powMat = addMat(powMat, DRIVE_ARRAY[DRIVE_MODE][0], SMOOTH_DRIVING);
                         break;
                     case -1:
-                        powMat = addMat(powMat, new float[]{-1f, -1f, 
-                                                            -1f, -1f}, SMOOTH_DRIVING);
+                        powMat = addMat(powMat, DRIVE_ARRAY[DRIVE_MODE][1], SMOOTH_DRIVING);
                     default:
                         break;
                 }
             } 
-            // Only the right joystick is active
-            else if (rXBox != 0 && lYBox == 0) {
+            // Right joystick is active
+            if (rXBox != 0) {
                 switch(rXBox) {
                     case 0:
                         break;
                     case 1:
-                        powMat =  addMat(powMat, new float[]{1f, -1f, 
-                                                              -1f, 1f}, SMOOTH_DRIVING);
+                        powMat =  addMat(powMat, DRIVE_ARRAY[DRIVE_MODE][2], SMOOTH_DRIVING);
                     case -1:
-                        powMat =  addMat(powMat, new float[]{-1f, 1f, 
-                                                              1f, -1f}, SMOOTH_DRIVING);
+                        powMat =  addMat(powMat, DRIVE_ARRAY[DRIVE_MODE][3], SMOOTH_DRIVING);
                     default:
                         break;
                 }
             }
-            // Both the joysticks are active (Combos)
-            else {
-                if (lYBox == 1) {
-                    if (rXBox == 1) {
-                        powMat = addMat(powMat, new float[]{1f, 0f, 
-                                                            0f, 1f}, SMOOTH_DRIVING);
-                    }
-                    else if (rXBox == -1) {
-                        powMat = addMat(powMat, new float[]{0f, 1f,
-                                                            1f, 0f}, SMOOTH_DRIVING);
-                    }
-                }
-                else if (lYBox == -1) {
-                    if (rXBox == 1) {
-                        powMat = addMat(powMat, new float[]{0f, -1f, 
-                                                           -1f, 0f}, SMOOTH_DRIVING);
-                    }
-                    else if (rXBox == -1) {
-                        powMat = addMat(powMat, new float[]{-1f, 0f,
-                                                             0f, -1f}, SMOOTH_DRIVING);
-                    }
-                }
-            }
-
+            
             // Turning
             if (gamepad1.left_trigger > CONFIG.CONTROLLER.TRIGGER_DEADZONE) {
-                powMat = addMat(powMat, new float[]{-1f, 1f, 
-                                                    -1f, 1f}, SMOOTH_DRIVING);
+                powMat = addMat(powMat, DRIVE_ARRAY[DRIVE_MODE][4], SMOOTH_DRIVING);
             }
             if (gamepad1.right_trigger > CONFIG.CONTROLLER.TRIGGER_DEADZONE) {
-                powMat = addMat(powMat, new float[]{1f, -1f, 
-                                                    1f, -1f}, SMOOTH_DRIVING);
+                powMat = addMat(powMat, DRIVE_ARRAY[DRIVE_MODE][5], SMOOTH_DRIVING);
+            }
+
+            // If the gamepad's x button is pressed launch the plane
+            if (gamepad1.x) {
+                paLa.setPosition( paLa.getPosition() + (1.0 / 360.0) );
             }
       
-            mtFL.setPower(powMat[0] * SPEED);
-            mtFR.setPower(powMat[1] * SPEED);
-            mtBL.setPower(powMat[2] * SPEED);
-            mtBR.setPower(powMat[3] * SPEED);
+            int magScale = (Math.abs(gamepad1.left_stick_x) + Math.abs(gamepad1.right_stick_y)) / 2;
+            mtFL.setPower(powMat[0] * SPEED * magScale);
+            mtFR.setPower(powMat[1] * SPEED * magScale);
+            mtBL.setPower(powMat[2] * SPEED * magScale);
+            mtBR.setPower(powMat[3] * SPEED * magScale);
         }
+
+    //     // GAMEPAD 2 CONFIGURATION (CONTROLSURFACE DRIVER)
+    //     if( !gamepad2.atRest() ) {
+    //         powMat = new float[] {0f, 0f,
+    //                               0f, 0f};
+            
+            
+    //         // Y-values are inverted on gamepad as up returns negative values
+    //         lXBox = calcBox(gamepad1.left_stick_x, STICK_DEADZONE);
+    //         lYBox = calcBox(-gamepad1.left_stick_y, STICK_DEADZONE);
+    //         rXBox = calcBox(gamepad1.right_stick_x, STICK_DEADZONE);
+    //         lXBox = calcBox(-gamepad1.right_stick_y, STICK_DEADZONE);
+        
+    //         // Left joystick is active
+    //         if (lYBox != 0) {
+    //             switch(lYBox) {
+    //                 case 0:
+    //                     break;
+    //                 case 1:
+    //                     powMat = addMat(powMat, DRIVE_ARRAY[DRIVE_MODE][0], SMOOTH_DRIVING);
+    //                     break;
+    //                 case -1:
+    //                     powMat = addMat(powMat, DRIVE_ARRAY[DRIVE_MODE][1], SMOOTH_DRIVING);
+    //                 default:
+    //                     break;
+    //             }
+    //         } 
+    //         // Right joystick is active
+    //         if (rXBox != 0) {
+    //             switch(rXBox) {
+    //                 case 0:
+    //                     break;
+    //                 case 1:
+    //                     powMat =  addMat(powMat, DRIVE_ARRAY[DRIVE_MODE][2], SMOOTH_DRIVING);
+    //                 case -1:
+    //                     powMat =  addMat(powMat, DRIVE_ARRAY[DRIVE_MODE][3], SMOOTH_DRIVING);
+    //                 default:
+    //                     break;
+    //             }
+    //         }
+            
+    //         // Turning
+    //         if (gamepad1.left_trigger > CONFIG.CONTROLLER.TRIGGER_DEADZONE) {
+    //             powMat = addMat(powMat, DRIVE_ARRAY[DRIVE_MODE][4], SMOOTH_DRIVING);
+    //         }
+    //         if (gamepad1.right_trigger > CONFIG.CONTROLLER.TRIGGER_DEADZONE) {
+    //             powMat = addMat(powMat, DRIVE_ARRAY[DRIVE_MODE][5], SMOOTH_DRIVING);
+    //         }
+
+    //         // If the gamepad's x button is pressed launch the plane
+    //         if (gamepad1.x) {
+
+    //         }
+
+    //         int magScale = (Math.abs(gamepad1.left_stick_x) + Math.abs(gamepad1.right_stick_y)) / 2;
+    //         mtFL.setPower(powMat[0] * SPEED * magScale);
+    //         mtFR.setPower(powMat[1] * SPEED * magScale);
+    //         mtBL.setPower(powMat[2] * SPEED * magScale);
+    //         mtBR.setPower(powMat[3] * SPEED * magScale);
+    //     }
     }
 
     // Returns an array where each value of matrixB is added to matrixA
@@ -163,5 +265,9 @@ public class Teleop extends OpMode {
         else {
             return 0;
         }
+    }
+
+    public static DcMotorSimple.Direction intToDir(int dir) {
+        return (dir == 1) ? DcMotorSimple.Direction.FORWARD : DcMotorSimple.Direction.REVERSE;
     }
 }

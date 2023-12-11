@@ -1,0 +1,26 @@
+-- [Training for New Drivers] --
+
+Welcome to this quick training guide to become a new driver!
+
+There are 3 driving modes:
+* Mecanum
+* Tank
+* Arcade
+
+Mecanum Driving Works as follows,
+-Moving the left stick up will move the robot foward
+-Moving the left stick down will move the robot backward
+-Moving the right stick right will strafe the robot to the right
+-Moving the right stick left will strafe the robot to the left
+-Moving both the left stick up and the right stick right will cause the robot to move diagonally, 
+this goes for all combinations
+-The left and right trigger rotate the robot counterclockwise and clockwise respectively
+
+Currently due to limitations in proccessing both Tank and Arcade drive the same,
+they can be driven as follows
+-Moving the left stick up will move the robot foward
+-Moving the left stick down will move the robot backward
+-Moving the right stick right will spin the robot in place clockwise
+-Moving the right stick left will spin the robot in place counterclockwise
+-Moving both the left stick up and the right stick right will cause the robot to move and rotate
+-The left and right trigger work the same as the right stick
